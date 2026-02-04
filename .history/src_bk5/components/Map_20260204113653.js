@@ -269,27 +269,29 @@ const Map = () => {
           `;
 
           if (district.name) {
-            const popup = new mapboxgl.Popup({
-              maxWidth: '400px',
-              closeButton: true,
-              closeOnClick: true,
-              anchor: 'bottom',
-              offset: [0, -10],
-              className: 'custom-popup'
-            })
-              .setLngLat(e.lngLat)
-              .setHTML(district.name ? popupHTML : '');
-  
-            popup.once('open', () => {
+            
+          }
+          
+          const popup = new mapboxgl.Popup({
+            maxWidth: '400px',
+            closeButton: true,
+            closeOnClick: true,
+            anchor: 'bottom',
+            offset: [0, -10],
+            className: 'custom-popup'
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(district.name ? popupHTML : '');
+
+          popup.once('open', () => {
+            requestAnimationFrame(() => {
               requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  const el = popup.getElement();
-                  if (el && district.name) el.classList.add('is-positioned');
-                });
+                const el = popup.getElement();
+                if (el && district.name) el.classList.add('is-positioned');
               });
             });
-            popup.addTo(district.name && map.current);
-          }
+          });
+          popup.addTo(district.name && map.current);
         }
       });
       });

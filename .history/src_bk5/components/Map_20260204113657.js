@@ -290,6 +290,8 @@ const Map = () => {
             });
             popup.addTo(district.name && map.current);
           }
+          
+          
         }
       });
       });

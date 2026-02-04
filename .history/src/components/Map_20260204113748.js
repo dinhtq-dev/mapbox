@@ -47,7 +47,7 @@ const Map = () => {
       });
 
       map.current.on('load', () => {
-      // Thêm source dữ liệu các khu vực (GeoJSON có top-level "id" cho từng feature)
+      // Thêm source dữ liệu các khu vực
       map.current.addSource('districts', {
         type: 'geojson',
         data: districtsData
@@ -77,7 +77,7 @@ const Map = () => {
         }
       });
 
-      // Layer viền mặc định (mỏng, màu nhạt)
+      // Layer viền mặc định (mỏng, màu theo từng block)
       map.current.addLayer({
         id: 'districts-outline',
         type: 'line',
@@ -96,7 +96,7 @@ const Map = () => {
         }
       });
 
-      // Source + layer viền nổi bật khi hover/click (vẽ riêng 1 feature lên trên)
+      // Source + layer viền nổi bật khi hover hoặc click (vẽ riêng 1 block lên trên)
       map.current.addSource('districts-highlight', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] }
@@ -167,7 +167,10 @@ const Map = () => {
         pitch: 0      // Nhìn thẳng từ trên xuống
       });
 
-      // Hàm vẽ viền border quanh 1 block (hover hoặc click)
+      // Popup hiện tại (đóng trước khi mở cái mới)
+      let currentPopup = null;
+
+      // Hàm: vẽ viền border quanh 1 block (dùng khi hover hoặc click)
       const setHighlightBorder = (feature) => {
         if (!feature || !feature.geometry) return;
         const src = map.current.getSource('districts-highlight');
@@ -183,7 +186,7 @@ const Map = () => {
         if (src) src.setData({ type: 'FeatureCollection', features: [] });
       };
 
-      // Hover: đưa chuột vào block thì hiện viền
+      // Hover: đưa chuột vào block → hiện viền quanh block đó
       map.current.on('mousemove', (e) => {
         const features = map.current.queryRenderedFeatures(e.point, { layers: ['districts-fill'] });
         if (features.length > 0) {
@@ -195,21 +198,22 @@ const Map = () => {
         }
       });
 
-      // Rời chuột khỏi vùng map (khu vực vẽ) thì ẩn viền
+      // Rời chuột khỏi vùng block → ẩn viền
       map.current.on('mouseleave', 'districts-fill', () => {
         map.current.getCanvas().style.cursor = '';
         clearHighlightBorder();
       });
 
-      // Xử lý click vào khu vực: popup + focus/scroll card bên trái + giữ viền quanh block đó
-      map.current.on('click', 'districts-fill', (e) => {
-        if (e.features.length > 0) {
-          const feature = e.features[0];
+      // Xử lý click: dùng queryRenderedFeatures để luôn bắt được block (tránh layer viền nổi bật chặn click)
+      map.current.on('click', (e) => {
+        const features = map.current.queryRenderedFeatures(e.point, { layers: ['districts-fill'] });
+        if (features.length > 0) {
+          const feature = features[0];
           setHighlightBorder(feature);
-          const district = feature.properties;
+          const district = feature.properties || {};
 
-          const features = districtsData.features || [];
-          const featureIndex = features.findIndex(
+          const allFeatures = districtsData.features || [];
+          const featureIndex = allFeatures.findIndex(
             (f) => Number(f.id) === Number(feature.id)
               || (f.properties?.id != null && f.properties.id === feature.properties?.id)
           );
@@ -248,48 +252,55 @@ const Map = () => {
 
           const detailUrl = district.link || district.url || district.website || '#';
 
-          let popupHTML = `
+          const imgUrl = district.image ? String(district.image).trim() : '';
+          const popupHTML = `
             <div class="popup-card">
               <div class="popup-card__inner">
-                ${district.image ? `
+                ${imgUrl ? `
                   <div class="popup-card__image-wrap">
                     ${district.type ? `<span class="popup-card__image-badge">${escape(district.type)}</span>` : ''}
-                    <img src="${district.image}" alt="${escape(district.name || 'Hình ảnh')}" onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling && this.nextElementSibling.classList.add('popup-card__image-placeholder--show');" />
-                    <div class="popup-card__image-placeholder" aria-hidden="true">Không tải được ảnh</div>
+                    <img src="${escape(imgUrl)}" alt="${escape(district.name || '')}" loading="lazy" onerror="this.style.display='none'" />
                   </div>
                 ` : ''}
                 <div class="popup-card__body">
-                  <div class="popup-card__fields">
-                    ${fieldsHTML}
-                  </div>
+                  ${district.name ? `<h3 class="popup-card__title">${escape(district.name)}</h3>` : ''}
+                  <div class="popup-card__fields">${fieldsHTML}</div>
                   <a href="${escape(detailUrl)}" class="popup-card__btn" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
                 </div>
               </div>
             </div>
           `;
 
-          if (district.name) {
-            const popup = new mapboxgl.Popup({
-              maxWidth: '400px',
-              closeButton: true,
-              closeOnClick: true,
-              anchor: 'bottom',
-              offset: [0, -10],
-              className: 'custom-popup'
-            })
-              .setLngLat(e.lngLat)
-              .setHTML(district.name ? popupHTML : '');
-  
-            popup.once('open', () => {
-              requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                  const el = popup.getElement();
-                  if (el && district.name) el.classList.add('is-positioned');
-                });
-              });
-            });
-            popup.addTo(district.name && map.current);
+          if (currentPopup) {
+            currentPopup.remove();
+            currentPopup = null;
           }
+
+          const popup = new mapboxgl.Popup({
+            maxWidth: '400px',
+            closeButton: true,
+            closeOnClick: false,
+            anchor: 'bottom',
+            offset: [0, -10],
+            className: 'custom-popup'
+          })
+            .setLngLat(e.lngLat)
+            .setHTML(popupHTML || '<div class="popup-card"><div class="popup-card__body"><p>Không có thông tin</p></div></div>');
+
+          popup.once('open', () => {
+            requestAnimationFrame(() => {
+              const el = popup.getElement();
+              if (el) {
+                el.classList.add('is-positioned');
+                const content = el.querySelector('.mapboxgl-popup-content');
+                if (content) content.classList.add('is-positioned');
+              }
+            });
+          });
+          popup.addTo(map.current);
+          currentPopup = popup;
+
+          if ()
         }
       });
       });
