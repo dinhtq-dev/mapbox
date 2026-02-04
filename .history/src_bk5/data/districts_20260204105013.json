@@ -9,7 +9,15 @@
         "name": "",
         "type": "",
         "description": "",
-        "color": "#a5b4fc"
+        "color": "#a5b4fc",
+        "gradientStart": "#a5b4fc",
+        "gradientEnd": "#c4b5fd",
+        "gradientDirection": "135deg",
+        "image": "",
+        "landArea": "52,180.50 m²",
+        "rentalRate": "2.6 USD/m²/month",
+        "moveInDate": "June, 2026",
+        "link": "https://ntbip.com"
       },
       "geometry": {
         "coordinates": [
@@ -63,11 +71,11 @@
         "gradientStart": "#6ee7b7",
         "gradientEnd": "#5eead4",
         "gradientDirection": "135deg",
-        "image": "",
+        "image": "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=400&h=240&fit=crop",
         "landArea": "38,450.75 m²",
         "rentalRate": "2.8 USD/m²/month",
         "moveInDate": "July, 2026",
-       "link": "https://ntbip.com"
+        "link": "https://ntbip.com"
       },
       "geometry": {
         "coordinates": [
@@ -122,7 +130,8 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
-"link": "https://ntbip.com"
+        "link": "https://ntbip.com"
+
       },
       "geometry": {
         "coordinates": [
@@ -169,7 +178,7 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
-   "link": "https://ntbip.com"
+        "link": "https://example.com/ksx-b2"
       },
       "geometry": {
         "coordinates": [
@@ -216,7 +225,7 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
- "link": "https://ntbip.com"
+        "link": "https://example.com/ksx-c1"
       },
       "geometry": {
         "coordinates": [
@@ -263,7 +272,7 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
-"link": "https://ntbip.com"
+        "link": "https://example.com/ksx-c2"
       },
       "geometry": {
         "coordinates": [

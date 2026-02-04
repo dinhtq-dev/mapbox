@@ -5,11 +5,7 @@
       "type": "Feature",
       "id": 1,
       "properties": {
-        "id": 1,
-        "name": "",
-        "type": "",
-        "description": "",
-        "color": "#a5b4fc"
+        "id": 1
       },
       "geometry": {
         "coordinates": [
