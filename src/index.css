@@ -57,7 +57,7 @@ html, body, #root {
   justify-content: center;
   padding: 8px 16px;
   min-height: 36px;
-  border-radius: 8px;
+  border-radius: 16px;
   font-size: 13px;
   font-weight: 600;
   font-family: inherit;
@@ -68,10 +68,48 @@ html, body, #root {
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  overflow: visible;
 }
 .map-block-button:hover {
   transform: scale(1.05);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+/* Mũi tên chỉ xuống cho button - absolute ở bottom center */
+.map-block-button-arrow-wrapper {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  z-index: 1;
+}
+
+.map-block-button-arrow-border {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 8px solid;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+.map-block-button-arrow-fill {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #fff;
 }
 
 /* Card trong list trái */
@@ -309,7 +347,7 @@ html, body, #root {
   font-size: 0.9rem;
   font-weight: 600;
   text-align: center;
-  border-radius: 8px;
+  border-radius: 10px;
   text-decoration: none;
   transition: background 0.2s ease;
   border: none;

@@ -161,8 +161,26 @@ const Map = () => {
         const el = document.createElement('button');
         el.className = 'map-block-button';
         el.type = 'button';
-        el.textContent = label;
         el.style.borderColor = color;
+        // Thêm text vào button
+        const buttonText = document.createTextNode(label);
+        el.appendChild(buttonText);
+        // Thêm mũi tên chỉ xuống - có viền và màu nền
+        const arrowWrapper = document.createElement('span');
+        arrowWrapper.className = 'map-block-button-arrow-wrapper';
+        
+        // Mũi tên viền (lớn hơn, màu border)
+        const arrowBorder = document.createElement('span');
+        arrowBorder.className = 'map-block-button-arrow-border';
+        arrowBorder.style.borderTopColor = color;
+        
+        // Mũi tên nền (nhỏ hơn, màu trắng)
+        const arrowFill = document.createElement('span');
+        arrowFill.className = 'map-block-button-arrow-fill';
+        
+        arrowWrapper.appendChild(arrowBorder);
+        arrowWrapper.appendChild(arrowFill);
+        el.appendChild(arrowWrapper);
         el.addEventListener('click', (ev) => {
           ev.stopPropagation();
           setHighlightBorder(fullFeature);
