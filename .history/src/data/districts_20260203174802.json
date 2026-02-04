@@ -1,0 +1,178 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 1,
+        "name": "Khu Trung Tâm",
+        "type": "Thương mại",
+        "population": 15000,
+        "area": 2.5,
+        "description": "Khu vực trung tâm thành phố với nhiều cửa hàng và văn phòng",
+        "color": "#FF6B6B"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [105.8, 21.0],
+          [105.85, 21.0],
+          [105.85, 21.05],
+          [105.8, 21.05],
+          [105.8, 21.0]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 2,
+        "name": "Khu Dân Cư A",
+        "type": "Dân cư",
+        "population": 25000,
+        "area": 3.2,
+        "description": "Khu dân cư cao cấp với nhiều biệt thự và căn hộ",
+        "color": "#4ECDC4"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [105.85, 21.0],
+          [105.9, 21.0],
+          [105.9, 21.05],
+          [105.85, 21.05],
+          [105.85, 21.0]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 3,
+        "name": "Khu Công Nghiệp",
+        "type": "Công nghiệp",
+        "population": 5000,
+        "area": 5.0,
+        "description": "Khu công nghiệp với nhiều nhà máy và xưởng sản xuất",
+        "color": "#FFE66D"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [105.8, 21.05],
+          [105.85, 21.05],
+          [105.85, 21.1],
+          [105.8, 21.1],
+          [105.8, 21.05]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 4,
+        "name": "Khu Dân Cư B",
+        "type": "Dân cư",
+        "population": 18000,
+        "area": 2.8,
+        "description": "Khu dân cư với nhiều chung cư và nhà phố",
+        "color": "#95E1D3"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [105.85, 21.05],
+          [105.9, 21.05],
+          [105.9, 21.1],
+          [105.85, 21.1],
+          [105.85, 21.05]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 5,
+        "name": "Khu Giáo Dục",
+        "type": "Giáo dục",
+        "population": 12000,
+        "area": 1.8,
+        "description": "Khu vực tập trung nhiều trường học và đại học",
+        "color": "#A8E6CF"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [105.9, 21.0],
+          [105.95, 21.0],
+          [105.95, 21.05],
+          [105.9, 21.05],
+          [105.9, 21.0]
+        ]]
+      }
+    },
+    {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "coordinates": [
+              106.69904789535343,
+              10.775900046267026
+            ],
+            "type": "Point"
+          }
+        },
+        {
+          "type": "Feature",
+          "properties": {},
+          "geometry": {
+            "coordinates": [
+              [
+                [
+                  106.69774516136454,
+                  10.776749541962374
+                ],
+                [
+                  106.69837406742857,
+                  10.777290128876416
+                ],
+                [
+                  106.69884574697755,
+                  10.777808650113386
+                ],
+                [
+                  106.69972172328136,
+                  10.778812592948043
+                ],
+                [
+                  106.69836283696344,
+                  10.780114403943898
+                ],
+                [
+                  106.69693656785307,
+                  10.779750338724781
+                ],
+                [
+                  106.69597074782502,
+                  10.77890085150554
+                ],
+                [
+                  106.69694779831838,
+                  10.777731423610078
+                ],
+                [
+                  106.69774516136454,
+                  10.776749541962374
+                ]
+              ]
+            ],
+            "type": "Polygon"
+          }
+        }
+      ]
+    }
+  ]
+}

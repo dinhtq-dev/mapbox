@@ -1,0 +1,197 @@
+import React, { useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
+import districtsData from '../data/districts.json';
+import ZoomControls from './ZoomControls';
+
+// Lưu ý: Bạn cần thay thế token này bằng Mapbox token của bạn
+// Đăng ký miễn phí tại: https://account.mapbox.com/
+// Token mặc định này có thể không hoạt động, bạn cần đăng ký và lấy token của riêng mình
+const MAPBOX_TOKEN = process.env.REACT_APP_MAPBOX_TOKEN || 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw';
+
+if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'YOUR_TOKEN_HERE') {
+  console.error('Vui lòng cấu hình Mapbox token trong file .env hoặc Map.js');
+}
+
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+const Map = () => {
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
+  useEffect(() => {
+    if (map.current) return; // Khởi tạo map chỉ một lần
+
+    if (!mapContainer.current) {
+      console.error('Map container không tồn tại');
+      return;
+    }
+
+    // Khởi tạo map
+    try {
+      map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/mapbox/light-v11', // Style miễn phí
+        center: [105.85, 21.05], // Tọa độ trung tâm (sẽ được override bởi fitBounds)
+        zoom: 10, // Zoom mặc định (sẽ được override bởi fitBounds)
+        minZoom: 0,  // Cho phép zoom ra xa nhất
+        maxZoom: 22  // Cho phép zoom vào gần nhất
+      });
+
+      map.current.on('error', (e) => {
+        console.error('Lỗi Mapbox:', e);
+      });
+
+      map.current.on('load', () => {
+      // Thêm source dữ liệu các khu vực
+      map.current.addSource('districts', {
+        type: 'geojson',
+        data: districtsData
+      });
+
+      // Thêm layer để tô màu các khu vực
+      // Không giới hạn zoom - hiển thị ở mọi mức zoom
+      map.current.addLayer({
+        id: 'districts-fill',
+        type: 'fill',
+        source: 'districts',
+        minzoom: 0,  // Hiển thị từ zoom 0 (toàn cầu)
+        maxzoom: 24, // Đến zoom 24 (chi tiết nhất)
+        paint: {
+          'fill-color': [
+            'get',
+            'color'
+          ],
+          'fill-opacity': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 0.4,    // Zoom nhỏ: opacity thấp hơn
+            10, 0.6,   // Zoom trung bình: opacity bình thường
+            15, 0.7    // Zoom lớn: opacity cao hơn
+          ]
+        }
+      });
+
+      // Thêm layer viền cho các khu vực
+      map.current.addLayer({
+        id: 'districts-outline',
+        type: 'line',
+        source: 'districts',
+        minzoom: 0,
+        maxzoom: 24,
+        paint: {
+          'line-color': '#fff',
+          'line-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,      // Zoom nhỏ: đường mỏng
+            10, 2,     // Zoom trung bình: đường vừa
+            15, 3      // Zoom lớn: đường dày hơn
+          ]
+        }
+      });
+
+      // Thêm layer labels (tên khu vực)
+      map.current.addLayer({
+        id: 'districts-labels',
+        type: 'symbol',
+        source: 'districts',
+        minzoom: 0,
+        maxzoom: 24,
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+          'text-size': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 10,     // Zoom nhỏ: chữ nhỏ
+            10, 14,    // Zoom trung bình: chữ vừa
+            15, 18     // Zoom lớn: chữ lớn hơn
+          ],
+          'text-allow-overlap': false,
+          'text-ignore-placement': false
+        },
+        paint: {
+          'text-color': '#333',
+          'text-halo-color': '#fff',
+          'text-halo-width': [
+            'interpolate',
+            ['linear'],
+            ['zoom'],
+            0, 1,
+            10, 2,
+            15, 3
+          ]
+        }
+      });
+
+      // Tự động zoom để hiển thị tất cả khu vực
+      const bounds = new mapboxgl.LngLatBounds();
+      districtsData.features.forEach((feature) => {
+        if (feature.geometry.type === 'Polygon') {
+          feature.geometry.coordinates[0].forEach((coord) => {
+            bounds.extend(coord);
+          });
+        }
+      });
+
+      // Fit bounds với padding để không sát mép
+      map.current.fitBounds(bounds, {
+        padding: { top: 50, bottom: 50, left: 50, right: 50 },
+        maxZoom: 15 // Giới hạn zoom tối đa khi fit bounds
+      });
+
+      // Xử lý click vào khu vực
+      map.current.on('click', 'districts-fill', (e) => {
+        if (e.features.length > 0) {
+          const feature = e.features[0];
+          const district = feature.properties;
+          
+          // Tạo popup
+          new mapboxgl.Popup()
+            .setLngLat(e.lngLat)
+            .setHTML(`
+              <div>
+                <h3>${district.name}</h3>
+                <p>${district.type}</p>
+              </div>
+            `)
+            .addTo(map.current);
+        }
+      });
+
+      // Thay đổi cursor khi hover
+      map.current.on('mouseenter', 'districts-fill', () => {
+        map.current.getCanvas().style.cursor = 'pointer';
+      });
+
+      map.current.on('mouseleave', 'districts-fill', () => {
+        map.current.getCanvas().style.cursor = '';
+      });
+      });
+    } catch (error) {
+      console.error('Lỗi khi khởi tạo map:', error);
+      setError(error.message || 'Lỗi khi khởi tạo bản đồ. Vui lòng kiểm tra Mapbox token.');
+    }
+
+    // Cleanup
+    return () => {
+      if (map.current) {
+        map.current.remove();
+        map.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
+      <div ref={mapContainer} style={{ width: '100%', height: '100%' }} />
+      <ZoomControls map={map} />
+    </div>
+  );
+};
+
+export default Map;
