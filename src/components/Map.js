@@ -19,6 +19,7 @@ mapboxgl.accessToken = MAPBOX_TOKEN;
 const Map = () => {
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const buttonMarkersRef = useRef([]);
   const [selectedCardIndex, setSelectedCardIndex] = useState(null);
 
   useEffect(() => {
@@ -114,6 +115,66 @@ const Map = () => {
         }
       });
 
+      // Nút (button) tại tâm mỗi block — click mở popup
+      const getPolygonCentroid = (ring) => {
+        if (!ring || ring.length === 0) return [0, 0];
+        let sumLng = 0, sumLat = 0, n = ring.length;
+        for (let i = 0; i < n; i++) {
+          sumLng += ring[i][0];
+          sumLat += ring[i][1];
+        }
+        return [sumLng / n, sumLat / n];
+      };
+      // Chỉ show button khi properties có field buttonName (khai báo trong JSON)
+      const seenIds = new Set();
+      const buttonPoints = (districtsData.features || [])
+        .filter((f) => {
+          const props = f.properties || {};
+          const hasButtonName = props.buttonName != null && String(props.buttonName).trim() !== '';
+          if (!hasButtonName) return false;
+          if (f.geometry?.type !== 'Polygon' || !f.geometry.coordinates?.[0]?.length) return false;
+          const id = f.id ?? props.id;
+          if (seenIds.has(id)) return false;
+          seenIds.add(id);
+          return true;
+        })
+        .map((f) => {
+          const coords = f.geometry.coordinates[0];
+          return {
+            type: 'Feature',
+            id: f.id,
+            geometry: { type: 'Point', coordinates: getPolygonCentroid(coords) },
+            properties: { ...(f.properties || {}) }
+          };
+        });
+      // Nút HTML: dạng pill, padding theo text, 1 button/block (chỉ khi có buttonName)
+      const allFeatures = districtsData.features || [];
+      const buttonMarkers = [];
+      buttonPoints.forEach((point) => {
+        const fullFeature = allFeatures.find(
+          (f) => Number(f.id) === Number(point.id) || f.properties?.id === point.properties?.id
+        );
+        if (!fullFeature) return;
+        const coords = point.geometry.coordinates;
+        const color = point.properties?.color || '#64748b';
+        const label = String(point.properties?.buttonName || '').trim() || 'Xem';
+        const el = document.createElement('button');
+        el.className = 'map-block-button';
+        el.type = 'button';
+        el.textContent = label;
+        el.style.borderColor = color;
+        el.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          setHighlightBorder(fullFeature);
+          openPopupForFeature(fullFeature, coords);
+        });
+        const marker = new mapboxgl.Marker({ element: el })
+          .setLngLat(coords)
+          .addTo(map.current);
+        buttonMarkers.push(marker);
+      });
+      buttonMarkersRef.current = buttonMarkers;
+
       // Thêm layer labels (tên khu vực)
       map.current.addLayer({
         id: 'districts-labels',
@@ -186,9 +247,88 @@ const Map = () => {
         if (src) src.setData({ type: 'FeatureCollection', features: [] });
       };
 
-      // Hover: đưa chuột vào block → hiện viền quanh block đó
+      const escape = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const formatValue = (v) => {
+        if (v == null) return '—';
+        if (typeof v === 'number') return Number.isInteger(v) ? Number(v).toLocaleString() : String(v);
+        return String(v);
+      };
+      const CARD_FIELDS = [
+        { key: 'landArea', keyAlt: 'land_area', label: 'Total Land Area' },
+        { key: 'rentalRate', keyAlt: 'rental_rate', label: 'Rental Rate' },
+        { key: 'leaseTerm', keyAlt: 'lease_term', label: 'Lease Term' },
+        { key: 'moveInDate', keyAlt: 'move_in_date', label: 'Lease Move-in Date' }
+      ];
+
+      const openPopupForFeature = (feature, lngLat) => {
+        const district = feature.properties || {};
+        const featureIndex = allFeatures.findIndex(
+          (f) => Number(f.id) === Number(feature.id) || (f.properties?.id != null && f.properties.id === feature.properties?.id)
+        );
+        const cardIndex = featureIndex >= 0 ? featureIndex : Number(feature.id) - 1;
+        if (cardIndex >= 0) {
+          setSelectedCardIndex(cardIndex);
+          requestAnimationFrame(() => {
+            const cardEl = document.getElementById(`card-${cardIndex}`);
+            if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          });
+        }
+        const fieldsHTML = CARD_FIELDS.map(({ key, keyAlt, label }) => {
+          const value = district[key] ?? district[keyAlt];
+          if (value == null || value === '') return '';
+          return `<div class="popup-card__row"><span class="popup-card__label">${escape(label)}</span><span class="popup-card__value">${escape(formatValue(value))}</span></div>`;
+        }).filter(Boolean).join('');
+        const detailUrl = district.link || district.url || district.website || '#';
+        const imgUrl = district.image ? String(district.image).trim() : '';
+        const popupHTML = `
+          <div class="popup-card">
+            <div class="popup-card__inner">
+              ${imgUrl ? `<div class="popup-card__image-wrap">${district.type ? `<span class="popup-card__image-badge">${escape(district.type)}</span>` : ''}<img src="${escape(imgUrl)}" alt="${escape(district.name || '')}" loading="lazy" onerror="this.style.display='none'" /></div>` : ''}
+              <div class="popup-card__body">
+                ${district.name ? `<h3 class="popup-card__title">${escape(district.name)}</h3>` : ''}
+                <div class="popup-card__fields">${fieldsHTML}</div>
+                <a href="${escape(detailUrl)}" class="popup-card__btn" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
+              </div>
+            </div>
+          </div>
+        `;
+        if (currentPopup) {
+          currentPopup.remove();
+          currentPopup = null;
+        }
+
+        if (district.name) {
+          const popup = new mapboxgl.Popup({
+            maxWidth: '400px',
+            closeButton: true,
+            closeOnClick: false,
+            anchor: 'bottom',
+            offset: [0, -10],
+            className: 'custom-popup'
+          })
+            .setLngLat(lngLat)
+            .setHTML(popupHTML || '<div class="popup-card"><div class="popup-card__body"><p>Không có thông tin</p></div></div>');
+          popup.once('open', () => {
+            requestAnimationFrame(() => {
+              const el = popup.getElement();
+              if (el) {
+                el.classList.add('is-positioned');
+                const content = el.querySelector('.mapboxgl-popup-content');
+                if (content) content.classList.add('is-positioned');
+              }
+            });
+          });
+          popup.addTo(map.current);
+          currentPopup = popup;
+        };
+        }
+        
+
+      // Hover: đưa chuột vào block → pointer, hiện viền block
       map.current.on('mousemove', (e) => {
-        const features = map.current.queryRenderedFeatures(e.point, { layers: ['districts-fill'] });
+        const features = map.current.queryRenderedFeatures(e.point, {
+          layers: ['districts-fill']
+        });
         if (features.length > 0) {
           map.current.getCanvas().style.cursor = 'pointer';
           setHighlightBorder(features[0]);
@@ -204,107 +344,15 @@ const Map = () => {
         clearHighlightBorder();
       });
 
-      // Xử lý click: dùng queryRenderedFeatures để luôn bắt được block (tránh layer viền nổi bật chặn click)
-      map.current.on('click', (e) => {
-        const features = map.current.queryRenderedFeatures(e.point, { layers: ['districts-fill'] });
-        if (features.length > 0) {
-          const feature = features[0];
-          setHighlightBorder(feature);
-          const district = feature.properties || {};
-
-          const allFeatures = districtsData.features || [];
-          const featureIndex = allFeatures.findIndex(
-            (f) => Number(f.id) === Number(feature.id)
-              || (f.properties?.id != null && f.properties.id === feature.properties?.id)
-          );
-          const cardIndex = featureIndex >= 0 ? featureIndex : (Number(feature.id) - 1);
-          if (cardIndex >= 0) {
-            setSelectedCardIndex(cardIndex);
-            requestAnimationFrame(() => {
-              const cardEl = document.getElementById(`card-${cardIndex}`);
-              if (cardEl) cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            });
-          }
-
-          const escape = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-          const formatValue = (v) => {
-            if (v == null) return '—';
-            if (typeof v === 'number') return Number.isInteger(v) ? Number(v).toLocaleString() : String(v);
-            return String(v);
-          };
-
-          const CARD_FIELDS = [
-            { key: 'landArea', keyAlt: 'land_area', label: 'Total Land Area' },
-            { key: 'rentalRate', keyAlt: 'rental_rate', label: 'Rental Rate' },
-            { key: 'leaseTerm', keyAlt: 'lease_term', label: 'Lease Term' },
-            { key: 'moveInDate', keyAlt: 'move_in_date', label: 'Lease Move-in Date' }
-          ];
-          const fieldsHTML = CARD_FIELDS.map(({ key, keyAlt, label }) => {
-            const value = district[key] ?? district[keyAlt];
-            if (value == null || value === '') return '';
-            return `
-              <div class="popup-card__row">
-                <span class="popup-card__label">${escape(label)}</span>
-                <span class="popup-card__value">${escape(formatValue(value))}</span>
-              </div>
-            `;
-          }).filter(Boolean).join('');
-
-          const detailUrl = district.link || district.url || district.website || '#';
-
-          const imgUrl = district.image ? String(district.image).trim() : '';
-          const popupHTML = `
-            <div class="popup-card">
-              <div class="popup-card__inner">
-                ${imgUrl ? `
-                  <div class="popup-card__image-wrap">
-                    ${district.type ? `<span class="popup-card__image-badge">${escape(district.type)}</span>` : ''}
-                    <img src="${escape(imgUrl)}" alt="${escape(district.name || '')}" loading="lazy" onerror="this.style.display='none'" />
-                  </div>
-                ` : ''}
-                <div class="popup-card__body">
-                  ${district.name ? `<h3 class="popup-card__title">${escape(district.name)}</h3>` : ''}
-                  <div class="popup-card__fields">${fieldsHTML}</div>
-                  <a href="${escape(detailUrl)}" class="popup-card__btn" target="_blank" rel="noopener noreferrer">Xem chi tiết</a>
-                </div>
-              </div>
-            </div>
-          `;
-
-          if (currentPopup) {
-            currentPopup.remove();
-            currentPopup = null;
-          }
-
-          
-
-          if (district.name) {
-            const popup = new mapboxgl.Popup({
-              maxWidth: '400px',
-              closeButton: true,
-              closeOnClick: false,
-              anchor: 'bottom',
-              offset: [0, -10],
-              className: 'custom-popup'
-            })
-              .setLngLat(e.lngLat)
-              .setHTML(popupHTML || '<div class="popup-card"><div class="popup-card__body"><p>Không có thông tin</p></div></div>');
-  
-            popup.once('open', () => {
-              requestAnimationFrame(() => {
-                const el = popup.getElement();
-                if (el) {
-                  el.classList.add('is-positioned');
-                  const content = el.querySelector('.mapboxgl-popup-content');
-                  if (content) content.classList.add('is-positioned');
-                }
-              });
-            });
-            popup.addTo(map.current);
-            currentPopup = popup;
-          }
-        }
-      });
+      // Xử lý click vào block (fill) → show popup (click vào nút HTML xử lý trong marker)
+      // map.current.on('click', (e) => {
+      //   const features = map.current.queryRenderedFeatures(e.point, { layers: ['districts-fill'] });
+      //   if (features.length === 0) return;
+      //   const feature = features[0];
+      //   if (!feature || !feature.properties) return;
+      //   setHighlightBorder(feature);
+      //   openPopupForFeature(feature, e.lngLat);
+      // });
       });
     } catch (error) {
       console.error('Lỗi khi khởi tạo map:', error);
@@ -312,6 +360,8 @@ const Map = () => {
 
     // Cleanup
     return () => {
+      buttonMarkersRef.current.forEach((m) => m.remove());
+      buttonMarkersRef.current = [];
       if (map.current) {
         map.current.remove();
         map.current = null;

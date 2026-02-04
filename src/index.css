@@ -50,6 +50,30 @@ html, body, #root {
   height: 100%;
 }
 
+/* Nút trên map: button bình thường, padding theo text */
+.map-block-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  min-height: 36px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #1e293b;
+  background: #fff;
+  border: 2px solid;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.map-block-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
 /* Card trong list trái */
 .list-card {
   background: #fff;

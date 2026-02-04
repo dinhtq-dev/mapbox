@@ -122,7 +122,8 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
-"link": "https://ntbip.com"
+        "link": "https://ntbip.com",
+        "buttonName": "SX4"
       },
       "geometry": {
         "coordinates": [
@@ -169,7 +170,8 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
-   "link": "https://ntbip.com"
+        "link": "https://ntbip.com",
+        "buttonName": "SX1"
       },
       "geometry": {
         "coordinates": [
@@ -216,7 +218,8 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
- "link": "https://ntbip.com"
+        "link": "https://ntbip.com",
+        "buttonName": "SX2"
       },
       "geometry": {
         "coordinates": [
@@ -263,7 +266,8 @@
         "rentalRate": "3 USD/m²/month",
         "leaseTerm": "5 - 45 years",
         "moveInDate": "September, 2026",
-"link": "https://ntbip.com"
+        "link": "https://ntbip.com",
+        "buttonName": "SX3"
       },
       "geometry": {
         "coordinates": [
