@@ -37,10 +37,10 @@ const Map = () => {
         style: 'mapbox://styles/mapbox/light-v11', // Style miễn phí
         center: [105.85, 21.05], // Tọa độ trung tâm (sẽ được override bởi fitBounds)
         zoom: 10,
-        bearing: 25,   // Xoay map: 0 = Bắc lên trên, 25 = xoay theo chiều kim đồng hồ (nhìn từ hướng Tây Bắc)
-        pitch: 0,     // 0 = nhìn vuông góc từ trên xuống (không nghiêng)
-        minZoom: 14,   // Hạn chế thu nhỏ: không cho zoom ra xa hơn mức 9
-        maxZoom: 22
+        // bearing: 25,   // Xoay map: 0 = Bắc lên trên, 25 = xoay theo chiều kim đồng hồ (nhìn từ hướng Tây Bắc)
+        // pitch: 0,     // 0 = nhìn vuông góc từ trên xuống (không nghiêng)
+        // minZoom: 14,   // Hạn chế thu nhỏ: không cho zoom ra xa hơn mức 9
+        // maxZoom: 22
       });
 
       map.current.on('error', (e) => {
